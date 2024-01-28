@@ -1,0 +1,10 @@
+plotworld:
+  name: world
+  spawn:
+    x: -55.5
+    y: 67
+    z: 0.5
+lobby: world
+database:
+  host: mongodb://root:root@localhost:27017/?authMechanism=SCRAM-SHA-256
+  name: redbuild
