@@ -13,7 +13,8 @@ public class LobbyCmd extends Cmd{
 
     public LobbyCmd() {
         super("lobby", "commande pour se tp au slobby");
-        setPermission("redbuild.tp.lobby");
+        setPermission("redbuild.tp.lobby");// temporaire
+
     }
 
     @Override
