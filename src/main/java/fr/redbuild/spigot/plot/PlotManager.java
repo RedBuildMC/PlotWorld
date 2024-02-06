@@ -2,20 +2,26 @@ package fr.redbuild.spigot.plot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import org.bson.Document;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import fr.redbuild.models.spigot.Autowired.Autowired;
 import fr.redbuild.models.spigot.region.RegionController;
+import fr.redbuild.models.spigot.user.User;
+import fr.redbuild.models.spigot.user.UserManager;
 
 public class PlotManager {
     private List<Plot> loadedPlots = new ArrayList<>();
      @Autowired
      private RegionController regionController; 
      @Autowired
-     private PlotRepository plotRepository; 
+     private PlotRepository plotRepository;
+     @Autowired
+     private UserManager userManager; 
      
     public void unclaimPlot(Plot plot,Player player){
         loadedPlots.remove(loadedPlots.stream().filter(nullPlot -> nullPlot.getId().equals(plot.getId())).findFirst().orElse(plot));
@@ -26,6 +32,22 @@ public class PlotManager {
         }
         plot.resetall();
         plotRepository.save(plot);
+    }
+
+    public boolean havePlot(Player player){
+        return getHisPlot(player) != null;
+    }
+
+    public Plot getPlot(Player player,int id){
+        User user = userManager.getUser(player);
+        if(user.hasAttribute("plots")){
+            List<Plot> plots = documentToPlot((Document) user.getAttribute("plots"));
+            if(plots.size() > id)
+                return plots.get(id);
+            else
+                return plots.get(0);
+        }
+        return null;
     }
 
     public void initPlot(Location originePlot,int size, int plotSize, int intervalle, int nombrePlot) {
@@ -107,8 +129,56 @@ public class PlotManager {
     }
 
     public void loadPlot(Plot plot){
+        if (plot.isClaimed())
+            plot.getOwnPlayers().forEach(uuid -> {
+                User user = userManager.getUser(uuid);
+                if(user != null)
+                    if(!user.hasAttribute("plots"))
+                        user.setAttribute("plots", plotToDocument(List.of(plot)));
+                    else{
+                        List<Plot> plots = documentToPlot((Document) user.getAttribute("plots"));
+                        if(plots == null)
+                           plots = new ArrayList<>();
+                        if(!plots.contains(plot)){
+                            plots.add(plot);
+                            user.setAttribute("plots", plotToDocument(plots));
+                        }
+                    }
+            });
         loadedPlots.add(plot);
         regionController.registerRegion(plot.getRegion());
+    }
+    
+    public Document plotToDocument(List<Plot> plots) {
+            Document doc = new Document();
+            List<String> plotIds = new ArrayList<>();
+            for (Plot plot : plots) {
+                if(!plotIds.contains(plot.getId().toString()))
+                    plotIds.add(plot.getId().toString());
+            }
+            doc.append("plotIds", plotIds);
+            return doc;
+        }
+
+    public List<Plot> documentToPlot(Document document){
+        List<Plot> plots = new ArrayList<>();
+        if(document != null){
+            List<String> plotIds = document.getList("plotIds", String.class);
+            if(plotIds != null){
+                plotIds.forEach(id -> {
+                    plotRepository.findById(UUID.fromString(id)).ifPresent(plots::add);
+                });
+            }
+        }
+        return plots;
+    }
+
+    public List<Plot> getHisPlot(Player player){
+        User user = userManager.getUser(player);
+        if(user.hasAttribute("plots")){
+            return documentToPlot((Document) user.getAttribute("plots"));
+        }
+        return null;
     }
 
     public Plot getPlot(Player player) {

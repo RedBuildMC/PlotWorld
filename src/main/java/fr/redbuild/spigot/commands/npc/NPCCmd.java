@@ -23,7 +23,9 @@ public class NPCCmd extends Cmd {
     @Override
     public void execute(CommandSender sender, String arg1, Argument arg2) {
         if(sender instanceof Player player){
-            new NPC(player,arg2.get(1, Location.class)).setName(arg2.get(4, String.class)).spawn();
+            NPC npc = new NPC(player,arg2.get(1, Location.class));
+            npc.setName(arg2.get(4, String.class));
+            npc.spawn();
             // player.sendMessage("§aYou have spawn a npc");s
             CtMsg.sendMessage("§aYou have spawn a npc", player);
         }

@@ -2,6 +2,7 @@ package fr.redbuild.spigot.commands.plots.subcmd;
 
 import java.util.List;
 
+import org.bson.Document;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -9,6 +10,8 @@ import org.bukkit.entity.Player;
 import fr.redbuild.models.spigot.Autowired.Autowired;
 import fr.redbuild.models.spigot.commands.SubCmd.SubCmd;
 import fr.redbuild.models.spigot.commands.arg.Argument;
+import fr.redbuild.models.spigot.user.User;
+import fr.redbuild.models.spigot.user.UserManager;
 import fr.redbuild.spigot.plot.Plot;
 import fr.redbuild.spigot.plot.PlotManager;
 import fr.redbuild.spigot.plot.PlotRepository;
@@ -18,6 +21,8 @@ public class PlotClaimCmd extends SubCmd{
     private PlotManager plotManager; 
     @Autowired
     private PlotRepository plotRepository;
+    @Autowired
+    private UserManager userManager;
 
     public PlotClaimCmd(boolean optional) {
         super("claim",optional);
@@ -34,6 +39,18 @@ public class PlotClaimCmd extends SubCmd{
                     plot.reset();
                     plot.modifyBorder(Material.POLISHED_BLACKSTONE_SLAB, Material.RED_CONCRETE);
                     plot.setOwnPlayers(List.of(player.getUniqueId()));
+                    plot.getOwnPlayers().forEach(uuid -> {
+                        User user = userManager.getUser(player.getUniqueId());
+                        if(!user.hasAttribute("plots"))
+                            user.setAttribute("plots", plotManager.plotToDocument(List.of(plot)));
+                        else{
+                            List<Plot> plots = plotManager.documentToPlot((Document) user.getAttribute("plots"));
+                        if(!plots.contains(plot)){
+                            plots.add(plot);
+                            user.setAttribute("plots", plotManager.plotToDocument(plots));
+                        }
+                    }
+                });
                     plotRepository.save(plot);
                     plotManager.realoadLoadedPlot();
                     arg0.sendMessage("§4§lRed§6§lBuild §7» §aVous avez réclamé ce plot");

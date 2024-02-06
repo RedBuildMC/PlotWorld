@@ -35,10 +35,11 @@ public class Main extends PluginController {
         }
         INSTANCE = this;
         new ScoreBoard("main", Injector.getInstance(MiniMessage.class).deserialize("<dark_red>Red<gold>Build"))
-                .addLine(2, "grade : Aucun")
-                .addLine(1,
+                .addLine(3, "grade : Aucun")
+                .addLine(2,
                         ChatColor.DARK_RED + "Red" + ChatColor.GOLD + "Build" + ChatColor.WHITE + "." + ChatColor.GOLD
-                                + "org") 
+                                + "playit.gg") 
+                .addLine(1, ChatColor.BLUE + "PlotWorld")
                 .addLine(0, ChatColor.RED + "[1.19.4]").registerAll();
         Injector.getInstance(CodecController.class).registerCodecProvider(CodecRegistries.fromProviders(PojoCodecProvider.builder().register(
                         //plot
